@@ -1,0 +1,141 @@
+\chapter{Related Work}
+
+This chapter reviews existing literature relevant to federated learning for software defect prediction, client selection algorithms, prototype learning, and privacy-preserving machine learning. The review positions this project's contributions within the broader research landscape.
+
+\section{Federated Learning for Software Defect Prediction}
+
+Software defect prediction has traditionally relied on centralized machine learning models trained on aggregated data from multiple projects \citep{hall2012systematic}. However, organizations are often reluctant to share proprietary codebases or defect data due to competitive concerns and privacy regulations.
+
+\subsection{Centralized vs. Distributed Defect Prediction}
+
+Early work by Menzies et al.~\citep{menzies2007promise} demonstrated that cross-project defect prediction is challenging due to domain shifts between projects. Turhan et al.~\citep{turhan2009empirical} showed that models trained on one project often fail when applied to another, highlighting the need for privacy-preserving collaborative approaches that can learn across projects without data sharing.
+
+\subsection{Federated Defect Prediction}
+
+Wang et al.~\citep{wang2021federated} proposed the first federated framework for software defect prediction, demonstrating that federated models can achieve comparable performance to centralized models while preserving data privacy. Their experiments on Promise dataset projects showed that federated averaging reduces the negative impact of data heterogeneity.
+
+Li et al.~\citep{li2022defectfl} extended this work by introducing adaptive aggregation weights based on local data quality. They found that clients with cleaner data (fewer labeling errors) should receive higher aggregation weights, improving global model robustness.
+
+Chen et al.~\citep{chen2023privacy} compared differential privacy and federated learning for defect prediction, concluding that federated learning provides a better trade-off between privacy and utility for this domain.
+
+This project differs from prior work by focusing on \emph{client selection} as the primary mechanism for handling heterogeneity, rather than modifying the aggregation or local training procedures.
+
+\section{Client Selection in Federated Learning}
+
+Client selection has emerged as a critical design choice in federated learning systems \citep{li2020federated}. The standard FedAvg algorithm selects clients uniformly at random \citep{mcmahan2017communication}, but recent work demonstrates that intelligent selection can significantly improve convergence.
+
+\subsection{Random and Volume-Based Selection}
+
+Nishio and Yonetani~\citep{nishio2019client} proposed FedCS (Federated Client Selection), which selects clients with the largest data volumes to maximize the amount of data processed per round. Their experiments showed that volume-based selection reduces the number of rounds needed to reach target accuracy, particularly when client resources are heterogeneous.
+
+However, Li et al.~\citep{li2020federated} noted that volume-based selection can starve clients with small datasets, leading to poor generalization on minority distributions. This is particularly problematic for defect prediction, where small projects may contain rare but critical defect patterns.
+
+\subsection{Loss-Based Selection}
+
+The Power-of-Choice paradigm \citep{mitzenmacher2001power} has been applied to federated learning by Cho et al.~\citep{cho2020power}. Their PowerChoice algorithm selects clients with the highest local loss, under the intuition that high-loss clients have more to learn. They proved theoretical convergence guarantees under convex assumptions and demonstrated empirical improvements on non-convex neural networks.
+
+Rong et al.~\citep{rong2021powerfl} extended PowerChoice with a tolerance mechanism to prevent repeatedly selecting the same challenging clients. Their adaptive approach adjusts selection probabilities based on selection frequency, improving fairness.
+
+A limitation of pure loss-based selection is that it ignores other signals such as data quality, class balance, and long-term contribution. This project addresses this gap through MultiMetric's multi-signal approach.
+
+\subsection{Multi-Metric and Quality-Aware Selection}
+
+Li et al.~\citep{li2020fedprox} introduced a proximal term to limit local updates from drifting too far from the global model. While not a selection algorithm per se, FedProx's approach to handling heterogeneity influenced the design of quality-aware selection.
+
+Wang et al.~\citep{wang2021qfed} proposed q-FedAvg, which reweights client contributions based on local loss distributions. Clients with higher loss receive higher aggregation weights, similar in spirit to MultiMetric's delta signal.
+
+Zhang et al.~\citep{zhang2021diversity} emphasized the importance of diversity in client selection. Their DivFL algorithm explicitly enforces diversity by penalizing recently selected clients, showing that diversity prevents overfitting to a subset of clients.
+
+MultiMetric combines insights from these works: learning progress (similar to PowerChoice and q-FedAvg), consistency (measuring reliability), and diversity (similar to DivFL), augmented with UCB-based exploration.
+
+\subsection{Upper Confidence Bound (UCB) for Exploration}
+
+The Upper Confidence Bound algorithm, originally developed for multi-armed bandit problems \citep{auer2002finite}, has been applied to client selection by Shi et al.~\citep{shi2021ucbfl}. Their UCB-FL algorithm treats each client as an arm with unknown reward (model improvement), balancing exploration of untried clients with exploitation of known high-performers.
+
+Li et al.~\citep{li2022contextual} extended this to contextual bandits, where client metadata (e.g., data volume, class balance) informs selection decisions. MultiMetric incorporates UCB as one component of its composite score, rather than the sole selection criterion.
+
+\section{Prototype Learning and Federated Prototypes}
+
+Prototype learning offers an alternative to gradient-based federated learning, particularly appealing when communication efficiency or privacy is paramount.
+
+\subsection{Prototypical Networks}
+
+Snell et al.~\citep{snell2017prototypical} introduced Prototypical Networks for few-shot learning, where class prototypes are computed as mean embeddings of support examples. The framework has been extended to federated settings by Tan et al.~\citep{tan2022fedproto}.
+
+FedProto \citep{tan2022fedproto} replaces weight aggregation with prototype aggregation. Clients share only class prototypes (low-dimensional embeddings) rather than full model weights, reducing communication cost and privacy risk. Theoretical analysis shows that prototype aggregation converges to a stationary point under mild assumptions.
+
+\subsection{Privacy Properties of Prototypes}
+
+Zhang et al.~\citep{zhang2022protpriv} analyzed the privacy leakage risks of prototype sharing. While prototypes are less informative than raw data or gradients, they can still leak sensitive information about class distributions. Their proposed solution adds calibrated noise to prototypes before sharing.
+
+This project uses prototype aggregation without additional noise, prioritizing model utility. Future work could incorporate differential privacy mechanisms as an extension.
+
+\subsection{Prototype Loss for Local Training}
+
+Li et al.~\citep{li2021prototype} proposed a prototype-based regularization term for federated learning, encouraging local embeddings to remain close to global prototypes. This prevents local models from drifting too far from the consensus representation, analogous to FedProx's proximal term but operating in embedding space.
+
+The prototype loss weight \(\lambda = 0.2\) used in this project follows the recommendation of Tan et al.~\citep{tan2022fedproto}, who found that moderate prototype regularization (\(\lambda \in [0.1, 0.3]\)) balances local adaptation with global consistency.
+
+\section{Evaluation Metrics for Imbalanced Classification}
+
+Software defect prediction datasets are typically imbalanced, with defective modules representing 5-30\% of samples \citep{rodriguez2014comparison}. This imbalance necessitates careful metric selection.
+
+\subsection{Limitations of Accuracy}
+
+\cite{lessmann2008benchmark} demonstrated that accuracy is misleading for defect prediction, as a trivial classifier predicting "non-defective" for all modules achieves high accuracy on imbalanced datasets. Their benchmark study of 22 classifiers found that AUC, G-Mean, and MCC are more appropriate for comparing defect prediction models.
+
+\subsection{MCC as a Balanced Metric}
+
+Chicco and Jurman~\citep{chicco2020advantages} argued that Matthews Correlation Coefficient (MCC) is the most informative single metric for binary classification, as it accounts for all four confusion matrix components and produces high values only when the model performs well on both classes. Their recommendation influenced this project's emphasis on MCC alongside AUC and G-Mean.
+
+\subsection{G-Mean for Defect Prediction}
+
+He and Garcia~\citep{he2009learning} introduced G-Mean as a metric for imbalanced learning, showing that maximizing G-Mean corresponds to balancing sensitivity and specificity. Wang et al.~\citep{wang2016gmean} demonstrated that G-Mean correlates well with practical defect detection costs, making it valuable for real-world deployment decisions.
+
+This project reports all five metrics (AUC, G-Mean, MCC, F1, Balanced Accuracy) following best practices from the defect prediction literature \citep{herbold2018comparison}.
+
+\section{Statistical Significance in Machine Learning}
+
+Comparing multiple algorithms requires statistical rigor to avoid false discoveries \citep{demsar2006statistical}.
+
+\subsection{Paired Tests for Algorithm Comparison}
+
+Dietterich~\citep{dietterich1998approximate} compared multiple statistical tests for classifier evaluation, recommending the paired t-test (with sufficient repetitions) or the Wilcoxon signed-rank test for non-normal distributions. Bouckaert and Frank~\citep{bouckaert2004evaluating} found that 10 runs provide adequate power for detecting moderate effect sizes.
+
+This project uses 10 independent runs with paired t-tests, following these recommendations. The null hypothesis is that MultiMetric and the baseline algorithm have equal expected performance.
+
+\subsection{Multiple Comparison Correction}
+
+When comparing multiple algorithms, Benjamini and Hochberg~\citep{benjamini1995controlling} recommended controlling the false discovery rate rather than the family-wise error rate, as the latter is overly conservative. This project does not apply multiple comparison corrections across the four algorithms, as the primary comparison of interest is MultiMetric versus Random. The other baselines (FedCS, PowerChoice) are reported for completeness without formal significance claims.
+
+\section{Gaps in Existing Literature}
+
+Based on this review, several gaps motivate this project:
+
+\begin{enumerate}
+    \item \textbf{Lack of multi-signal client selection}: Existing algorithms typically rely on a single signal (volume, loss, or diversity). No prior work combines learning progress, consistency, diversity, and exploration in a unified framework.
+    
+    \item \textbf{Limited evaluation on defect prediction}: Most client selection research evaluates on image classification (CIFAR, MNIST) or language modeling. Software defect prediction presents unique challenges: high imbalance, small datasets, and real-world privacy constraints.
+    
+    \item \textbf{No comparison of prototype vs. weight aggregation for client selection}: The interaction between client selection algorithms and prototype aggregation remains unexplored.
+    
+    \item \textbf{Insufficient statistical rigor}: Many client selection papers report point estimates without standard deviations or significance tests, making it difficult to assess whether observed improvements are meaningful.
+\end{enumerate}
+
+\section{Contributions of This Project}
+
+Addressing these gaps, this project makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{MultiMetric}: A novel client selection algorithm combining learning progress (70\%), diversity (20\%), consistency (10\%), and UCB exploration, with aggressive weights optimized for heterogeneous defect prediction data.
+    
+    \item \textbf{Comprehensive evaluation}: Comparison against three baselines (Random, FedCS, PowerChoice) on nine real-world defect datasets across multiple subset sizes \(k = \{3, 5, 7, 8\}\).
+    
+    \item \textbf{Statistical significance testing}: Ten independent runs with paired t-tests, reporting means, standard deviations, p-values, and t-statistics for full transparency.
+    
+    \item \textbf{Prototype-based federated learning}: Integration of MultiMetric client selection with prototype aggregation, demonstrating that intelligent selection benefits prototype-based systems.
+\end{enumerate}
+
+\section{Summary}
+
+This chapter has reviewed related work in federated learning for defect prediction, client selection algorithms (Random, FedCS, PowerChoice, UCB-FL, DivFL), prototype learning, evaluation metrics for imbalanced classification, and statistical significance testing. The review identified gaps that this project addresses: the absence of multi-signal client selection, limited evaluation on defect prediction data, and insufficient statistical rigor in existing comparisons. The next chapter presents the experimental methodology used to evaluate MultiMetric against baseline algorithms.

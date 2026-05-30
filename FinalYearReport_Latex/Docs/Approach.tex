@@ -1,0 +1,369 @@
+\chapter{Proposed Solution}
+
+This chapter presents the proposed FPLPA (Federated Prototype Learning with Privacy Awareness) framework with the MultiMetric client selection algorithm. The solution addresses the limitations of existing approaches identified in Chapter 2 by combining multiple quality signals into a unified selection mechanism.
+
+\section{System Overview}
+
+The proposed FPLPA framework operates in a federated setting with a central server and \(N\) clients, each holding local software defect prediction data.
+
+% FIGURE 3.1: System architecture diagram (server-client interaction)
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=0.8\textwidth]{figures/architecture.pdf}
+% \caption{FPLPA system architecture. The server selects a subset of clients each round, distributes global prototypes, receives local prototypes, and aggregates them.}
+% \label{fig:architecture}
+% \end{figure}
+
+\subsection{Key Components}
+
+The framework consists of four main components:
+
+\begin{enumerate}
+    \item \textbf{Client Selection}: MultiMetric algorithm selects which clients participate in each round based on learning progress, consistency, diversity, and exploration.
+    
+    \item \textbf{Local Training}: Selected clients train a Convolutional Prototype Network (CPN) on their local data, minimizing a composite loss of cross-entropy and prototype regularization.
+    
+    \item \textbf{Prototype Generation}: Each client computes class prototypes as mean embeddings of local samples.
+    
+    \item \textbf{Prototype Aggregation}: The server averages prototypes from selected clients to form updated global prototypes.
+\end{enumerate}
+
+\subsection{Assumptions}
+
+The framework makes the following assumptions:
+
+\begin{itemize}
+    \item Clients are honest-but-curious: they follow the protocol but may attempt to infer information from shared prototypes.
+    \item Communication channels between server and clients are reliable.
+    \item All clients use the same model architecture (CPN).
+    \item Each client's local dataset remains static throughout training.
+\end{itemize}
+
+\section{MultiMetric Client Selection Algorithm}
+
+MultiMetric is the core contribution of this project. Unlike existing algorithms that rely on a single selection criterion, MultiMetric combines multiple signals to identify the most valuable clients each round.
+
+\subsection{Selection Signals}
+
+Four signals contribute to each client's selection score:
+
+\subsubsection{Learning Progress (Delta)}
+
+The learning progress signal measures how much a client's loss decreases during local training:
+\[
+\Delta_i^{(t)} = \max(\ell_i^{\text{before}} - \ell_i^{\text{after}}, 0)
+\]
+
+where \(\ell_i^{\text{before}}\) and \(\ell_i^{\text{after}}\) are the client's loss values before and after local training. A large positive delta indicates that the client learned substantially from the training round, suggesting that its local data provides valuable new information.
+
+The running exponential moving average (EMA) of delta is maintained:
+\[
+\bar{\Delta}_i^{(t)} = \alpha \cdot \bar{\Delta}_i^{(t-1)} + (1-\alpha) \cdot \Delta_i^{(t)}
+\]
+
+with \(\alpha = 0.8\) (strong weight on recent performance). This signal receives the highest weight in MultiMetric (70\%), reflecting the intuition that clients who demonstrate significant improvement are most valuable for future rounds.
+
+\subsubsection{Performance Consistency}
+
+Consistency measures the stability of a client's learning progress. Clients with highly variable performance may be unreliable:
+\[
+\text{consistency}_i = \frac{1}{1 + 2 \cdot \sigma_i}
+\]
+
+where \(\sigma_i\) is the standard deviation of the client's recent delta values (over the last 3 rounds). The factor 2 amplifies the impact of variance, making the algorithm strongly favor stable clients. This signal receives 10\% weight.
+
+\subsubsection{Diversity Enforcement}
+
+To prevent the algorithm from repeatedly selecting the same clients (leading to overfitting), diversity enforcement penalizes recently selected clients:
+\[
+\text{diversity}_i = 
+\begin{cases} 
+0.3 & \text{if client } i \text{ was selected in the last } k \text{ rounds} \\
+1.0 & \text{otherwise}
+\end{cases}
+\]
+
+The penalty is applied to the final score, not the probability, making it a hard constraint on selection. This signal receives 20\% weight.
+
+\subsubsection{UCB Exploration Bonus}
+
+The Upper Confidence Bound (UCB) bonus encourages exploration of clients with uncertain value:
+\[
+\text{UCB}_i = \beta \cdot \sqrt{\frac{4 \ln(t)}{\text{count}_i + 1}}
+\]
+
+where:
+\begin{itemize}
+    \item \(t\) is the current round number
+    \item \(\text{count}_i\) is the number of times client \(i\) has been selected
+    \item \(\beta = 0.3\) is the exploration coefficient
+\end{itemize}
+
+The UCB bonus decreases as a client is selected more frequently, naturally shifting from exploration to exploitation over time.
+
+\subsection{Score Computation}
+
+The composite score for client \(i\) at round \(t\) is:
+\[
+S_i^{(t)} = w_{\Delta} \cdot \bar{\Delta}_i^{(t)} + w_{\text{cons}} \cdot \text{consistency}_i + w_{\text{div}} \cdot \text{diversity}_i + \text{UCB}_i
+\]
+
+with weights:
+\[
+w_{\Delta} = 0.70, \quad w_{\text{cons}} = 0.10, \quad w_{\text{div}} = 0.20
+\]
+
+Scores are normalized to \([0, 1]\) range before selection to ensure comparability across clients.
+
+\subsection{Annealed Softmax Selection}
+
+Rather than selecting the top-\(k\) clients deterministically, MultiMetric uses an annealed softmax mechanism:
+\[
+P(\text{select client } i) = \frac{\exp(S_i^{(t)} / T_t)}{\sum_{j=1}^{N} \exp(S_j^{(t)} / T_t)}
+\]
+
+% FIGURE 3.2: Temperature annealing curve
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=0.6\textwidth]{figures/temperature_annealing.pdf}
+% \caption{Temperature annealing from $T_{\text{init}}=3.0$ to $T_{\text{final}}=0.1$ over training rounds.}
+% \label{fig:temperature}
+% \end{figure}
+
+The temperature \(T_t\) decreases exponentially from \(T_{\text{init}} = 3.0\) to \(T_{\text{final}} = 0.1\):
+\[
+T_t = T_{\text{init}} \cdot \left(\frac{T_{\text{final}}}{T_{\text{init}}}\right)^{\frac{t - t_{\text{warmup}}}{\text{rounds} - t_{\text{warmup}}}}
+\]
+
+for \(t \geq t_{\text{warmup}}\) (where \(t_{\text{warmup}} = 3\) rounds). During warmup rounds, clients are selected uniformly at random to build initial performance estimates.
+
+\subsection{Pseudocode}
+
+Algorithm 1 presents the complete MultiMetric client selection procedure.
+
+\begin{algorithm}[htbp]
+\caption{MultiMetric Client Selection}
+\label{alg:multimetric}
+\begin{algorithmic}[1]
+\REQUIRE $N$ clients, selection count $k$, rounds $R$, warmup $W$
+\ENSURE Selected clients per round
+\STATE Initialize $\bar{\Delta}_i \gets 0$, $\text{count}_i \gets 0$ for $i=1..N$
+\STATE Initialize history lists $\text{loss\_before}_i$, $\text{loss\_after}_i$ for $i=1..N$
+\FOR{$t = 1$ to $R$}
+    \IF{$t \leq W$}
+        \STATE $\mathcal{S}_t \gets \text{random\_sample}(N, k)$ \COMMENT{Warmup exploration}
+    \ELSE
+        \STATE $T \gets \text{anneal\_temperature}(t)$
+        \FOR{each client $i$}
+            \STATE $\Delta_i \gets \text{EMA}(\text{loss\_before}_i - \text{loss\_after}_i)$
+            \STATE $\text{cons}_i \gets 1 / (1 + 2 \cdot \text{std}(\Delta_i^{\text{recent}}))$
+            \STATE $\text{div}_i \gets 0.3$ if $i \in \mathcal{S}_{\text{recent}}$ else $1.0$
+            \STATE $\text{ucb}_i \gets 0.3 \cdot \sqrt{4 \ln(t) / (\text{count}_i + 1)}$
+            \STATE $S_i \gets 0.7 \cdot \Delta_i + 0.1 \cdot \text{cons}_i + 0.2 \cdot \text{div}_i + \text{ucb}_i$
+        \ENDFOR
+        \STATE $\mathcal{S}_t \gets \text{sample\_without\_replacement}(N, k, \text{softmax}(S/T))$
+    \ENDIF
+    \STATE $\text{count}_i \gets \text{count}_i + 1$ for $i \in \mathcal{S}_t$
+    \STATE Store $\mathcal{S}_t$ for diversity penalty
+\ENDFOR
+\RETURN selection history $\{\mathcal{S}_1, \ldots, \mathcal{S}_R\}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Convolutional Prototype Network (CPN)}
+
+The CPN is the neural architecture used by all clients for local training. It is designed to be lightweight while maintaining sufficient capacity for defect prediction.
+
+% FIGURE 3.3: CPN architecture diagram
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=0.7\textwidth]{figures/cpn_architecture.pdf}
+% \caption{CPN architecture showing the sequence of layers from input to output.}
+% \label{fig:cpn}
+% \end{figure}
+
+\subsection{Input Processing}
+
+Raw software metrics undergo three preprocessing steps before being fed to the CPN:
+
+\subsubsection{Feature Selection}
+
+Mutual information selects the top \(K = 15\) most informative features:
+\[
+\text{MI}(X_j, y) = \sum_{x \in X_j} \sum_{c \in \mathcal{C}} p(x, c) \log \frac{p(x, c)}{p(x)p(c)}
+\]
+
+where \(X_j\) is the \(j\)-th feature and \(y\) is the defect label. This reduces dimensionality and removes irrelevant metrics.
+
+\subsubsection{Standardization}
+
+Selected features are standardized to zero mean and unit variance:
+\[
+x_{\text{std}} = \frac{x - \mu}{\sigma}
+\]
+
+where \(\mu\) and \(\sigma\) are the feature mean and standard deviation computed on the client's local data.
+
+\subsubsection{Square Projection}
+
+The standardized 15-dimensional feature vector is padded to 25 dimensions (a \(5 \times 5\) grid) with zeros:
+\[
+\mathbf{X}_{\text{input}} \in \mathbb{R}^{5 \times 5}
+\]
+
+\subsection{Architecture Details}
+
+Table 3.1 details the CPN layer specifications.
+
+\begin{table}[htbp]
+\centering
+\caption{CPN layer specifications}
+\label{tab:cpn_layers}
+\begin{tabular}{|l|l|c|c|}
+\hline
+\textbf{Layer} & \textbf{Parameters} & \textbf{Input} & \textbf{Output} \\
+\hline
+Input & - & - & \(1 \times 5 \times 5\) \\
+Conv2D & 8 filters, \(3 \times 3\), padding=1 & \(1 \times 5 \times 5\) & \(8 \times 5 \times 5\) \\
+BatchNorm & 8 channels & \(8 \times 5 \times 5\) & \(8 \times 5 \times 5\) \\
+ReLU & - & \(8 \times 5 \times 5\) & \(8 \times 5 \times 5\) \\
+MaxPool & \(2 \times 2\) & \(8 \times 5 \times 5\) & \(8 \times 2 \times 2\) \\
+Conv2D & 16 filters, \(3 \times 3\), padding=1 & \(8 \times 2 \times 2\) & \(16 \times 2 \times 2\) \\
+BatchNorm & 16 channels & \(16 \times 2 \times 2\) & \(16 \times 2 \times 2\) \\
+ReLU & - & \(16 \times 2 \times 2\) & \(16 \times 2 \times 2\) \\
+MaxPool & \(2 \times 2\) & \(16 \times 2 \times 2\) & \(16 \times 1 \times 1\) \\
+Flatten & - & \(16 \times 1 \times 1\) & 16 \\
+Linear & \(16 \to 32\) & 16 & 32 \\
+ReLU & - & 32 & 32 \\
+Dropout & \(p = 0.2\) & 32 & 32 \\
+Linear & \(32 \to C\) & 32 & \(C\) (num classes) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Forward Pass}
+
+For a given input \(\mathbf{x} \in \mathbb{R}^{5 \times 5}\), the CPN computes:
+\[
+\mathbf{z} = \text{ConvBlock}_2(\text{ConvBlock}_1(\mathbf{x}))
+\]
+\[
+\mathbf{e} = \text{ReLU}(W_{\text{emb}} \cdot \text{flatten}(\mathbf{z}) + b_{\text{emb}})
+\]
+\[
+\hat{\mathbf{y}} = \text{softmax}(W_{\text{cls}} \cdot \mathbf{e} + b_{\text{cls}})
+\]
+
+where \(\mathbf{e} \in \mathbb{R}^{32}\) is the embedding vector and \(\hat{\mathbf{y}} \in \mathbb{R}^C\) is the class probability distribution.
+
+\section{Prototype-Based Federated Learning}
+
+FPLPA uses prototypes instead of model weights for communication between server and clients, reducing privacy risk and communication overhead.
+
+\subsection{Prototype Definition}
+
+For client \(k\) with embedding function \(f_\theta\), the prototype for class \(c\) is:
+\[
+\mathbf{p}_c^{(k)} = \frac{1}{|\mathcal{D}_c^{(k)}|} \sum_{(\mathbf{x}, y) \in \mathcal{D}_c^{(k)}} f_\theta(\mathbf{x})
+\]
+
+where \(\mathcal{D}_c^{(k)}\) is the set of samples of class \(c\) on client \(k\). Each prototype is a 32-dimensional vector (matching the embedding dimension).
+
+\subsection{Local Training with Prototype Regularization}
+
+During local training, client \(k\) minimizes:
+\[
+\mathcal{L} = \underbrace{\mathcal{L}_{\text{CE}}(\hat{\mathbf{y}}, y)}_{\text{Cross-entropy}} + \lambda \cdot \underbrace{\frac{1}{|\mathcal{C}|} \sum_{c \in \mathcal{C}} \|\mathbf{e}_c - \mathbf{p}_c^{\text{global}}\|^2}_{\text{Prototype loss}}
+\]
+
+where:
+\begin{itemize}
+    \item \(\mathcal{L}_{\text{CE}}\) is standard cross-entropy loss
+    \item \(\mathbf{p}_c^{\text{global}}\) is the global prototype for class \(c\) received from the server
+    \item \(\mathbf{e}_c\) is the embedding of the current sample
+    \item \(\lambda = 0.2\) is the prototype loss weight
+    \item \(|\mathcal{C}|\) is the number of classes (typically 2 for binary defect prediction)
+\end{itemize}
+
+The prototype loss encourages local embeddings to remain close to the global class representations, preventing local models from drifting too far from the consensus.
+
+\subsection{Prototype Aggregation}
+
+After local training, selected clients send their updated prototypes \(\{\mathbf{p}_c^{(k)}\}_{c \in \mathcal{C}}\) to the server. The server aggregates by averaging:
+\[
+\mathbf{p}_c^{\text{global}} \leftarrow \frac{1}{|\mathcal{S}_t|} \sum_{k \in \mathcal{S}_t} \mathbf{p}_c^{(k)}
+\]
+
+No weighting by sample size is applied, giving equal influence to each selected client regardless of its data volume. This choice is intentional: clients with small datasets may have valuable rare defect patterns that would be drowned out by volume-weighted aggregation.
+
+\subsection{Convergence Properties}
+
+The prototype aggregation mechanism has desirable convergence properties under mild assumptions. Each local training step reduces the local loss, and the prototype regularization term keeps local embeddings bounded. The alternating process of local training and prototype aggregation forms a contraction mapping in the space of prototype distributions, ensuring convergence to a fixed point \citep{tan2022fedproto}.
+
+\section{Complete Federated Training Protocol}
+
+Algorithm 2 presents the complete FPLPA training protocol integrating all components.
+
+\begin{algorithm}[htbp]
+\caption{FPLPA Training Protocol}
+\label{alg:fplpa}
+\begin{algorithmic}[1]
+\REQUIRE $N$ clients with local data $\{\mathcal{D}_1, \ldots, \mathcal{D}_N\}$, rounds $R$, subset size $k$, local epochs $E$
+\ENSURE Trained local models and global prototypes
+\STATE Initialize global prototypes $\mathbf{p}_c^{\text{global}} \gets \mathbf{0}$ for $c \in \mathcal{C}$
+\STATE Initialize MultiMetric selector $\mathcal{M}$ with $N$ clients
+\FOR{$t = 1$ to $R$}
+    \STATE $\mathcal{S}_t \gets \mathcal{M}.\text{select}(k)$ \COMMENT{MultiMetric selection}
+    \STATE Broadcast $\mathbf{p}_c^{\text{global}}$ to all $i \in \mathcal{S}_t$
+    \FOR{each client $i \in \mathcal{S}_t$ in parallel}
+        \STATE $\ell_{\text{before}} \gets \mathcal{L}(\text{model}_i, \mathcal{D}_i, \mathbf{p}_c^{\text{global}})$
+        \FOR{$e = 1$ to $E$}
+            \STATE $\text{model}_i \gets \text{model}_i - \eta \nabla \mathcal{L}(\text{model}_i, \mathcal{D}_i, \mathbf{p}_c^{\text{global}})$
+        \ENDFOR
+        \STATE $\ell_{\text{after}} \gets \mathcal{L}(\text{model}_i, \mathcal{D}_i, \mathbf{p}_c^{\text{global}})$
+        \STATE Compute local prototypes $\{\mathbf{p}_c^{(i)}\}_{c \in \mathcal{C}}$ from $\text{model}_i$
+        \STATE Send $\{\mathbf{p}_c^{(i)}\}_{c \in \mathcal{C}}$, $\ell_{\text{before}}$, $\ell_{\text{after}}$ to server
+    \ENDFOR
+    \FOR{each class $c \in \mathcal{C}$}
+        \STATE $\mathbf{p}_c^{\text{global}} \gets \frac{1}{|\mathcal{S}_t|} \sum_{i \in \mathcal{S}_t} \mathbf{p}_c^{(i)}$
+    \ENDFOR
+    \STATE $\mathcal{M}.\text{update}(i, \ell_{\text{before}}, \ell_{\text{after}})$ for $i \in \mathcal{S}_t$
+\ENDFOR
+\RETURN Trained models $\{\text{model}_1, \ldots, \text{model}_N\}$, global prototypes $\mathbf{p}_c^{\text{global}}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Privacy Properties}
+
+While full privacy analysis is beyond this project's scope, FPLPA offers several privacy advantages over gradient-based federated learning.
+
+\subsection{Prototype vs. Gradient Sharing}
+
+Gradients can leak substantial information about training data \citep{zhu2019deep}. Prototypes are coarser: they aggregate many samples into a single vector, losing fine-grained information. An adversary with access to a prototype can only infer the average embedding of a class, not individual samples.
+
+\subsection{Information-Theoretic Bounds}
+
+The mutual information between a prototype \(\mathbf{p}_c\) and any individual sample \(\mathbf{x} \in \mathcal{D}_c\) is bounded by:
+\[
+I(\mathbf{p}_c; \mathbf{x}) \leq \frac{1}{|\mathcal{D}_c|} H(\mathbf{x})
+\]
+
+where \(H(\mathbf{x})\) is the entropy of the sample. As the class size increases, the maximum leakage per sample decreases linearly.
+
+\subsection{Limitations}
+
+FPLPA does not provide formal privacy guarantees (e.g., differential privacy). Malicious clients could potentially infer class distributions from prototypes, especially for small classes. Future work could add calibrated noise to prototypes to achieve differential privacy at the cost of reduced utility.
+
+\section{Summary}
+
+This chapter presented the proposed FPLPA framework with the MultiMetric client selection algorithm. Key contributions include:
+
+\begin{itemize}
+    \item A multi-signal client selection mechanism combining learning progress (70\%), consistency (10\%), diversity (20\%), and UCB exploration
+    \item Annealed softmax selection shifting from exploration to exploitation over time
+    \item A lightweight CPN architecture for resource-constrained clients
+    \item Prototype-based aggregation preserving privacy while enabling collaborative learning
+    \item Complete training protocol integrating all components
+\end{itemize}
+
+The next chapter describes the experimental methodology used to evaluate FPLPA against baseline algorithms.

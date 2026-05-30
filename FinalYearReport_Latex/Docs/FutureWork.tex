@@ -1,0 +1,51 @@
+\chapter{Conclusion and Future Work}
+
+\section{Summary of Contributions}
+
+This project presented FPLPA (Federated Prototype Learning with Privacy Awareness) with MultiMetric, a novel client selection algorithm for federated software defect prediction. The system addresses the fundamental challenge of intelligent client selection in heterogeneous federated environments, where clients exhibit varying data volumes, class distributions, and learning rates.
+
+The primary contribution is the MultiMetric algorithm, which combines four complementary signals into a unified client selection mechanism: learning progress (delta, 70\% weight), performance consistency (10\% weight), diversity enforcement (20\% weight), and UCB-based exploration bonus ($\beta=0.3$). An annealed softmax selection mechanism with temperature decreasing from $T_{\text{init}}=3.0$ to $T_{\text{final}}=0.1$ over 20 training rounds enables the algorithm to naturally transition from exploration to exploitation.
+
+Additional contributions include the Convolutional Prototype Network (CPN), a lightweight neural architecture designed for resource-constrained federated clients, and a prototype-based aggregation mechanism that shares only low-dimensional class embeddings rather than full model weights, reducing both communication cost and privacy risk.
+
+\section{Key Findings}
+
+Experiments on nine real-world software defect datasets (Apache, Safe, Zxing, CM1, MW1, PC1, PC3, PC4, and AEEEM) with subset sizes $k \in \{3, 5, 7, 8\}$, 20 communication rounds, and 10 independent runs yielded the following key findings:
+
+MultiMetric consistently outperforms all three baseline algorithms (Random, FedCS, PowerChoice) across all subset sizes and evaluation metrics. At $k=8$, MultiMetric achieves AUC of $0.9982 \pm 0.0029$, representing statistically significant improvements of $+1.28\%$ over random selection (paired t-test, $p=0.037$). F1 score improvements are also statistically significant ($p=0.025$), while G-Mean and MCC improvements are marginally significant ($p<0.10$).
+
+The ablation study confirms that all four MultiMetric signals contribute meaningfully. The learning progress signal is most important (removing it reduces AUC from 0.9982 to 0.9876), followed by diversity enforcement (AUC drops to 0.9901 without it). Using only the delta signal without the other components (AUC 0.9892) performs worse than the full MultiMetric, confirming that the multi-signal approach is essential.
+
+FedCS, despite prioritising high-volume clients, performs below Random in most configurations. This confirms that volume alone is an insufficient selection criterion for heterogeneous defect prediction data, particularly when smaller clients hold rare defect patterns not well represented in larger datasets.
+
+\section{Limitations}
+
+Several limitations of this work should be acknowledged. First, the federated simulation uses a single machine rather than truly distributed infrastructure; real-world communication delays and bandwidth constraints may affect the relative performance of algorithms differently. Second, the CPN architecture is intentionally small (approximately 5,000 parameters) to amplify selection differences; larger models might reduce the performance gap between algorithms.
+
+Third, FPLPA does not provide formal privacy guarantees. While prototype sharing is less informative than gradient sharing, a determined adversary with many rounds of prototype observations could potentially infer class distribution information. Fourth, the experiments cover nine datasets from two benchmark collections; performance on other programming languages, domains, or industrial codebases remains to be validated.
+
+Fifth, the hyperparameters of MultiMetric (weights, temperature schedule, UCB coefficient) were tuned on the experimental datasets and may require re-tuning for different federated configurations. The optimal $w_\Delta=0.70$ reflects the specific heterogeneity structure of the nine datasets used.
+
+\section{Future Directions}
+
+Several promising directions exist for extending this work:
+
+\textbf{Differential Privacy Integration}: Adding calibrated Gaussian or Laplace noise to prototypes before transmission would provide formal $(\epsilon, \delta)$-differential privacy guarantees \citep{dwork2014algorithmic}. The trade-off between privacy budget $\epsilon$ and model utility could be systematically characterised across different dataset characteristics.
+
+\textbf{Adaptive Weight Learning}: The MultiMetric weights ($w_\Delta, w_{\text{cons}}, w_{\text{div}}$) are currently fixed. A meta-learning approach could adapt these weights online based on observed convergence behaviour, enabling MultiMetric to self-tune for different federated configurations without manual hyperparameter search.
+
+\textbf{Cross-Silo Federated Learning}: The current work targets cross-device federated learning with many small clients. Cross-silo settings (few large institutional clients, e.g., software companies sharing defect data) present different challenges: fewer clients but much larger datasets, higher communication budgets, and stronger privacy requirements.
+
+\textbf{Larger and Deeper Models}: Investigating how MultiMetric's benefits scale to transformer-based or graph neural network models for defect prediction would be valuable. Larger models may require different selection strategies due to different sensitivity to client heterogeneity.
+
+\textbf{Asynchronous Federated Learning}: The current synchronous protocol requires all selected clients to complete training before aggregation. An asynchronous variant that incorporates stragglers would improve practical deployment, but requires adapting MultiMetric's selection and aggregation logic.
+
+\textbf{Extended Evaluation}: Evaluating FPLPA on additional defect prediction datasets (e.g., Bugzilla, GitHub Issues, industrial datasets) and on related tasks (e.g., vulnerability detection, code smell detection) would further validate the generality of MultiMetric.
+
+\section{Concluding Remarks}
+
+This project demonstrates that intelligent, multi-signal client selection provides meaningful and statistically significant benefits for federated software defect prediction. The MultiMetric algorithm, by combining learning progress, consistency, diversity, and exploration into a unified selection score with annealed softmax sampling, effectively identifies the most informative clients each round while avoiding the pitfalls of single-criterion approaches such as volume bias (FedCS) or high-loss fixation (PowerChoice).
+
+The prototype-based aggregation mechanism provides an additional layer of privacy protection compared to weight-sharing approaches, making FPLPA suitable for real-world deployments where organisations must collaborate on defect prediction without exposing proprietary codebases. The negligible computational overhead of MultiMetric's selection logic ensures that these benefits come at virtually no additional cost.
+
+In summary, FPLPA with MultiMetric represents a practical, effective, and privacy-aware solution for collaborative software defect prediction in heterogeneous federated environments.

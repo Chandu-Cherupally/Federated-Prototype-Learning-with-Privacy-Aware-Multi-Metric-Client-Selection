@@ -1,0 +1,288 @@
+%
+% Settings file
+%
+% This template is based on the UiB PhD thesis template
+%
+
+\include{settings}	% Document settings file
+
+%
+% We use the book class
+%
+
+\documentclass[10pt]{book}
+\renewcommand{\bibname}{References}
+%
+% The geometry package allows consistent control of page layout
+%
+
+% \usepackage[paper = a4paper,         %To be shrunk to 80% when printed
+% 			oneside,                 %Two-side mode, switches margins 
+% 			bindingoffset = 2mm,     %Offset for binding side of page
+% 			hmargin = 25mm,          %Left and right margin
+% 			vmargin = 25mm,          %Top and bottom margin
+% 			dvipdfm]{}
+% % 			{geometry}
+
+% \usepackage[paper = a4paper,oneside,bindingoffset = 2mm,hmargin = 25mm,vmargin = 25mm,dvipdfm]{geometry}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+\usepackage{float}
+\usepackage[T1]{fontenc}	% Activate Type 1 fonts
+\usepackage{mathptmx}       % Use Times font, also for math
+\usepackage[scaled]{helvet} % for sans serif fonts (\textsf{...} or \sffamiliy)
+\usepackage{sectsty}        % Change section and chapter header
+%\allsectionsfont{\usefont{T1}{phv}{bc}{n}\selectfont} % Set chapter/section header to narrow helvectica (arial-like)
+%\usepackage[scaled]{luximono} % for monospaced fonts (\texttt{...} or \ttfamily)
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{titlesec}
+
+%
+% Packages we need
+%
+\usepackage{graphicx}       % Handles figures
+\graphicspath{{./}{images/}{Docs/images/}{figures/}}
+\usepackage[utf8]{inputenc} % We want æøå
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage[mathcal]{euscript} % For calligraphy fonts
+\usepackage{booktabs}       % Publication quality tables
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{multirow}
+\usepackage{setspace}       % Easy setting of line spacing
+\usepackage{forloop}		% For-loops!
+% \usepackage[round]{natbib}  % author and names
+%\usepackage[numbers,sort&compress]{natbib}  % Sort numerical keys for multiple cites
+      % Avoid breaking 'backref' option of hyperref package   % named colors
+% \usepackage[procnames]{listings} % beautiful listings
+% \usepackage{units}				 % semantically represent numbers with units
+% \usepackage{natbib}  
+\usepackage[table]{xcolor}
+\usepackage[final]{pdfpages}
+\usepackage{epigraph}			%for quotation
+\setlength\epigraphwidth{8cm}
+%\setlength\epigraphrule{0pt} %remove line in quote
+\usepackage{textcomp}
+\usepackage{sidecap} %for figure caption on the side
+\usepackage{enumitem} % for possibility to adjust item left margin indentation
+
+\usepackage{titlesec} %fix header fonts
+\titleformat{\title}[display]
+  {\normalfont\rmfamily\huge\bfseries\color{black}}
+  {\chaptertitlename\ \thechapter}{16pt}{\Huge}
+\titleformat{\chapter}[display]
+  {\normalfont\rmfamily\huge\bfseries\color{black}}
+  {\chaptertitlename\ \thechapter}{16pt}{\Huge}
+\titleformat{\section}
+  {\normalfont\rmfamily\Large\bfseries\color{black}}
+  {\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\rmfamily\Large\bfseries\color{black}}
+  {\thesubsection}{1em}{}
+
+
+% The hyperref package allows advanced hyperlinking functionality
+%
+\usepackage[%dvipdfmx,        % Use dvipdf driver %KD removed
+			backref,         % List citing occurences in the References
+			colorlinks,      % Colored links
+			citecolor=black,  % Color of cite links
+			linkcolor=black,  % Color of links
+			urlcolor=blue,   % Color of urls
+			]{hyperref}
+%\newcommand{\aref}[1]{\autoref*{#1}} % Prevent links
+\newcommand{\aref}[1]{\autoref{#1}} % Enable links
+
+
+%
+% Set fancy page header using fancyhdr package
+% 
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+% Ensure that the chapter and section headings are in lowercase
+\setlength{\headheight}{13pt}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+
+% Delete current section for header/footer
+\fancyhf{}
+
+% Define header/footer layout
+\fancyhead[LE,RO]{\bfseries\thepage}
+\fancyhead[LO]{\bfseries\rightmark}
+\fancyhead[RE]{\bfseries\leftmark}
+\renewcommand{\headrulewidth}{0.5pt}
+
+% make space for the rule
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+\usepackage[font={small,it,rm}]{caption}
+\usepackage{atveryend}
+\usepackage{listings}
+%\usepackage{thumbs}
+
+
+%
+% Set header height to 30pt to make room for two rows in the header
+% (useful if you have very long chapter names)
+%
+%\headheight 30pt
+
+
+%
+% Include user-defined macros
+%
+\include{macros}
+
+%
+% TeX is very proud of its hyphenation engine, to the point where it 
+% hyphenates _everything_ just to show off.  Increasing penalty for 
+% hyphenation, and increase tolerance for underfull boxes can make 
+% the text easier to read, at the expense of making the text less aligned
+% to the right margin
+%
+\hyphenpenalty=10
+\tolerance=1000
+
+
+% Redefine include command -> input command
+%\renewcommand{\include}{\input}
+
+% Include only these chapters
+%\includeonly{introduction}
+
+
+%
+% Set up the frontpage, with author, title, etc
+%
+%{\fontsize{28}{30}\usefont{OT1}{phv}{bc}{n}\selectfont 
+%{\fontsize{28}{30}\usefont{T1}{phv}{bc}{n}\selectfont Exchange of water masses
+\title{{\fontsize{19}{18}\sffamily\textbf{Federated Prototype Learning with Privacy-Aware Multi-Metric Client Selection for Software Defect Prediction}}
+	\author{
+\begin{minipage}[t]{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Authors:}\\
+Merugu Pavan Kalyan\\
+Chandu Cherupally\\
+Beernelly Sravan
+\end{flushleft}
+\end{minipage}
+\begin{minipage}[t]{0.4\textwidth}
+\begin{flushright} \large
+\emph{Supervisor:} \\
+Dr.~Manjubala Bisi
+\end{flushright}
+\end{minipage}
+	    \vspace{5em}\\
+		\includegraphics[width=40mm]{uglo.png}\vspace{4em}\\
+		A Dissertation Report\\
+		Final Semester PROJECT WORK for B.Tech \\
+		Department of Computer Science and Engineering \\
+		NIT Warangal}
+	\huge\date{\today}
+}
+\let\cleardoublepage\clearpage
+
+% \setcounter{secnumdepth}{3}
+%====================================================
+%------------------ BEGIN DOCUMENT ------------------
+%====================================================
+\begin{document}
+%Cause all references in bibtex file to appear in the 'References' section, even
+%if they are not explicitly cite'ed in the document
+%\nocite{*}
+
+%Set the fontsize and baselineskip, if something other than 10 or 12 is required
+\ifDownscaledFinalDoc
+	\fontsize{\TextSize}{\BaseLineSkip}
+	\selectfont
+\fi
+
+%Double line spacing for draft
+\ifDraft
+	\doublespacing
+\fi
+
+\renewcommand{\familydefault}{\sfdefault} %KD
+
+%--------------------------------------------------------------------------------------------------
+% FRONT MATTER
+%--------------------------------------------------------------------------------------------------
+\let\cleardoublepage\clearpage
+\frontmatter
+\let\cleardoublepage\clearpage
+\normalfont\rmfamily
+
+\include{title}
+\include{Ack}
+\include{Dec}
+\include{Apr}
+\include{Cert}
+\include{Abs}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+
+%--------------------------------------------------------------------------------------------------
+% MAIN MATTER
+%--------------------------------------------------------------------------------------------------
+\mainmatter
+
+%
+% Main chapters
+%
+\include{Docs/Introduction}         % Introduction
+\let\cleardoublepage\clearpage
+\include{Docs/Background}
+\include{Docs/Related_work}
+\include{Docs/Approach}
+\include{Docs/Exp}
+\include{Docs/FutureWork}
+
+
+% \include{Conclusions}
+% \include{3Introduction_papers}  % Introduction to the papers
+% \include{4Papers}               % The papers, with cover pages
+%
+% Appendices
+%
+%\appendix
+%\include{appendixA}             % Appendix A: Something
+
+%--------------------------------------------------------------------------------------------------
+% BACK MATTER
+%--------------------------------------------------------------------------------------------------
+\vspace{1cm}
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{ieeetr}
+\bibliography{citation}
+
+
+% @inproceedings{ganitkevitch-etal-2013-ppdb,
+%     title = "{PPDB}: The Paraphrase Database",
+%     author = "Ganitkevitch, Juri  and
+%       Van Durme, Benjamin  and
+%       Callison-Burch, Chris",
+%     booktitle = "Proceedings of the 2013 Conference of the North {A}merican Chapter of the Association for Computational Linguistics: Human Language Technologies",
+%     month = jun,
+%     year = "2013",
+%     address = "Atlanta, Georgia",
+%     publisher = "Association for Computational Linguistics",
+%     url = "https://aclanthology.org/N13-1092",
+%     pages = "758--764",
+% }
+% @inproceedings{snli:emnlp2015,
+% 	Author = {Bowman, Samuel R. and Angeli, Gabor and Potts, Christopher, and Manning, Christopher D.},
+% 	Booktitle = {Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+% 	Publisher = {Association for Computational Linguistics},
+% 	Title = {A large annotated corpus for learning natural language inference},
+% 	Year = {2015}
+% }
+\end{document}
+

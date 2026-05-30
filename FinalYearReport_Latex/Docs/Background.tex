@@ -1,0 +1,217 @@
+\chapter{Background}
+
+This chapter provides the necessary background for understanding federated learning, client selection algorithms, prototype learning, and the evaluation metrics used in this project. Readers familiar with these topics may skip to Chapter 3.
+
+\section{Federated Learning}
+
+Federated learning is a distributed machine learning paradigm that enables multiple clients to collaboratively train a shared model without exchanging their local data \citep{mcmahan2017communication}. Unlike traditional centralized learning where all data is collected on a single server, federated learning follows a \emph{data stays local} principle: each client trains locally on its own dataset, and only model updates (gradients, weights, or prototypes) are communicated to a central server.
+
+\subsection{Federated Averaging (FedAvg)}
+
+The most widely used federated learning algorithm is Federated Averaging (FedAvg) \citep{mcmahan2017communication}. In each communication round \(t\):
+
+\begin{enumerate}
+    \item The server selects a subset \(\mathcal{S}_t\) of clients (typically random).
+    \item Selected clients receive the current global model weights \(w_t\).
+    \item Each client performs \(E\) local epochs of stochastic gradient descent on its local data.
+    \item Clients send back their updated weights \(w_{t+1}^{(k)}\).
+    \item The server aggregates updates via weighted averaging:
+    \[
+    w_{t+1} = \frac{\sum_{k \in \mathcal{S}_t} n_k \cdot w_{t+1}^{(k)}}{\sum_{k \in \mathcal{S}_t} n_k}
+    \]
+    where \(n_k\) is the number of samples on client \(k\).
+\end{enumerate}
+
+While FedAvg is simple and effective under independent and identically distributed (IID) data, it suffers when clients have heterogeneous data distributions—a common scenario in software defect prediction, where different teams may work on different types of projects with varying defect densities.
+
+\subsection{Statistical Heterogeneity}
+
+In real-world federated settings, client data is typically non-IID \citep{li2020federated}. For software defect prediction, this heterogeneity manifests in several ways:
+
+\begin{itemize}
+    \item \textbf{Class imbalance}: Some clients may have very few defective samples (e.g., 5\% defect rate) while others have many (e.g., 40\%).
+    \item \textbf{Feature distribution shift}: Different programming languages or project domains may produce different metric distributions.
+    \item \textbf{Sample size variation}: Large projects may have thousands of modules, while small projects have only hundreds.
+    \item \textbf{Label distribution skew}: Defect definitions may vary across organizations.
+\end{itemize}
+
+These heterogeneities make client selection critical: selecting the wrong clients can slow convergence or degrade final model quality.
+
+\section{Client Selection in Federated Learning}
+
+Client selection determines which clients participate in each communication round. This decision fundamentally impacts convergence speed, model quality, and fairness \citep{cho2020power}.
+
+\subsection{Random Selection}
+
+The simplest baseline selects \(k\) clients uniformly at random from the \(N\) available clients:
+\[
+P(\text{select client } i) = \frac{k}{N}, \quad \forall i
+\]
+
+Random selection is unbiased and ensures eventual participation of all clients, but it ignores statistical heterogeneity entirely. It serves as the baseline in this project.
+
+\subsection{Volume-Based Selection (FedCS)}
+
+FedCS (Federated Client Selection) prioritizes clients with the largest data volumes \citep{nishio2019client}. The selection probability is proportional to sample size:
+\[
+P(\text{select client } i) = \frac{n_i}{\sum_{j=1}^{N} n_j}
+\]
+
+This approach maximizes the amount of data processed per round but can starve small clients, leading to poor performance on minority distributions.
+
+\subsection{Loss-Based Selection (Power-of-Choice)}
+
+The Power-of-Choice paradigm \citep{mitzenmacher2001power} selects clients based on their local training loss. The variant used in this project (PowerChoice) maintains a running estimate of each client's loss after training and selects the \(k\) clients with highest loss:
+\[
+\ell_i^{(t)} = \alpha \ell_i^{(t-1)} + (1-\alpha) \ell_i^{\text{local}}
+\]
+
+High-loss clients are prioritized because they have more to learn—they are either difficult examples or underrepresented in the global model. However, this can lead to repeatedly selecting the same challenging clients while ignoring well-performing ones.
+
+\subsection{MultiMetric: Proposed Approach}
+
+MultiMetric is a novel client selection algorithm introduced in this project that combines multiple signals into a composite score:
+
+\[
+\text{score}_i = w_d \cdot \text{delta}_i + w_c \cdot \text{consistency}_i + w_v \cdot \text{diversity}_i + \beta \cdot \text{UCB}_i
+\]
+
+where:
+
+\begin{itemize}
+    \item \(\text{delta}_i\): Learning progress (reduction in loss from before to after local training)
+    \item \(\text{consistency}_i\): Stability of performance across rounds (inverse of variance)
+    \item \(\text{diversity}_i\): Penalty for recently selected clients to encourage exploration
+    \item \(\text{UCB}_i\): Upper Confidence Bound exploration bonus \(\sqrt{4 \log(t) / (\text{count}_i + 1)}\)
+    \item \(w_d = 0.70\), \(w_c = 0.10\), \(w_v = 0.20\), \(\beta = 0.3\): Aggressive weights favoring improvement
+\end{itemize}
+
+MultiMetric uses an annealed softmax mechanism with temperature \(T\) decreasing from \(3.0\) to \(0.1\):
+\[
+P(\text{select client } i) = \frac{\exp(\text{score}_i / T)}{\sum_{j=1}^{N} \exp(\text{score}_j / T)}
+\]
+
+High temperature early in training encourages exploration; low temperature later focuses on the highest-scoring clients.
+
+\section{Prototype Learning}
+
+Prototype learning is an alternative to transmitting full model weights. Instead of sharing gradients or weights, clients compute and share \emph{prototypes}: representative embeddings for each class \citep{snell2017prototypical}.
+
+\subsection{Prototype Definition}
+
+For client \(k\) with embedding function \(f_\theta\) (learned by a neural network), the prototype for class \(c\) is the mean embedding of all samples belonging to that class:
+\[
+\mathbf{p}_c^{(k)} = \frac{1}{|\mathcal{D}_c^{(k)}|} \sum_{(\mathbf{x}, y) \in \mathcal{D}_c^{(k)}} f_\theta(\mathbf{x})
+\]
+
+where \(\mathcal{D}_c^{(k)}\) is the set of samples of class \(c\) on client \(k\).
+
+\subsection{Prototype Aggregation}
+
+The server aggregates prototypes from selected clients by simple averaging:
+\[
+\mathbf{p}_c^{\text{global}} = \frac{1}{|\mathcal{S}_t|} \sum_{k \in \mathcal{S}_t} \mathbf{p}_c^{(k)}
+\]
+
+These global prototypes are then sent back to clients in the next round to guide local training via a prototype loss term.
+
+\subsection{Prototype Loss}
+
+During local training, each client minimizes a composite loss:
+\[
+\mathcal{L} = \mathcal{L}_{\text{CE}} + \lambda \cdot \mathcal{L}_{\text{proto}}
+\]
+
+where:
+\begin{itemize}
+    \item \(\mathcal{L}_{\text{CE}}\) is standard cross-entropy loss for classification
+    \item \(\mathcal{L}_{\text{proto}} = \frac{1}{|\mathcal{C}|} \sum_{c \in \mathcal{C}} \| \mathbf{e}_c - \mathbf{p}_c^{\text{global}} \|^2\) penalizes embeddings that deviate from global prototypes
+    \item \(\lambda = 0.2\) is the prototype loss weight
+\end{itemize}
+
+This encourages local models to maintain consistent class representations across clients without sharing raw data.
+
+\section{Convolutional Prototype Network (CPN)}
+
+The neural architecture used in this project is the Convolutional Prototype Network (CPN), a lightweight model designed for resource-constrained federated clients.
+
+\subsection{Architecture Details}
+
+The CPN takes as input a \(5 \times 5\) grid of features (obtained by projecting raw metrics onto a square after feature selection) and processes it through:
+
+\begin{itemize}
+    \item Two convolutional blocks, each containing Conv2D, BatchNorm, ReLU, and MaxPool2D
+    \item A fully connected layer reducing to a 32-dimensional embedding
+    \item A classification layer mapping the embedding to class logits
+\end{itemize}
+
+The model is intentionally small (approximately 5,000 parameters) for three reasons:
+
+\begin{enumerate}
+    \item \textbf{Resource efficiency}: Real-world federated clients may be resource-constrained.
+    \item \textbf{Variance amplification}: Smaller models are more sensitive to client selection, making algorithm differences clearer.
+    \item \textbf{Privacy}: Smaller models transmit less information, reducing privacy leakage risk.
+\end{enumerate}
+
+\section{Evaluation Metrics for Defect Prediction}
+
+Software defect prediction is typically framed as binary classification (defective vs. non-defective). This project uses five complementary metrics.
+
+\subsection{Area Under ROC Curve (AUC)}
+AUC measures the model's ability to distinguish between defective and non-defective modules across all classification thresholds. AUC ranges from 0.5 (random) to 1.0 (perfect).
+
+\subsection{Geometric Mean (G-Mean)}
+G-Mean balances sensitivity and specificity, particularly important for imbalanced defect data:
+\[
+\text{G-Mean} = \sqrt{\text{PD} \cdot (1 - \text{PF})}
+\]
+where PD (Probability of Detection) is the true positive rate, and PF (Probability of False alarm) is the false positive rate.
+
+\subsection{Matthews Correlation Coefficient (MCC)}
+MCC is a balanced correlation coefficient that works well for imbalanced datasets:
+\[
+\text{MCC} = \frac{TP \cdot TN - FP \cdot FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}
+\]
+Values range from \(-1\) to \(+1\), with 0 indicating random prediction.
+
+\subsection{F1 Score}
+The harmonic mean of precision and recall:
+\[
+\text{F1} = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}
+\]
+
+\subsection{Balanced Accuracy}
+The average of sensitivity and specificity:
+\[
+\text{Balanced Accuracy} = \frac{1}{2}\left(\frac{TP}{TP+FN} + \frac{TN}{TN+FP}\right)
+\]
+
+\section{Statistical Significance Testing}
+
+To determine whether observed performance differences are meaningful rather than due to random chance, this project uses paired t-tests.
+
+\subsection{Paired t-test}
+
+For two algorithms A and B evaluated on the same test instances, the paired t-test assesses whether the mean difference \(\bar{d}\) is significantly different from zero:
+
+\[
+t = \frac{\bar{d}}{s_d / \sqrt{n}}
+\]
+
+where \(s_d\) is the standard deviation of differences. The p-value indicates the probability of observing such a difference if no true difference exists.
+
+\subsection{Interpretation Guidelines}
+
+\begin{itemize}
+    \item \(p < 0.05\): Statistically significant (strong evidence)
+    \item \(0.05 \le p < 0.10\): Marginally significant (weak evidence)
+    \item \(p \ge 0.10\): Not significant (insufficient evidence)
+\end{itemize}
+
+\section{Software Defect Prediction Datasets}
+
+The experiments use nine publicly available software defect prediction datasets from the Promise repository \citep{menzies2007promise} and AEEEM dataset \citep{d2010empirical}: Apache, Safe, Zxing, CM1, MW1, PC1, PC3, PC4, and AEEEM. Each dataset contains static code metrics (lines of code, cyclomatic complexity, coupling, cohesion, etc.) and a binary defect label.
+
+\section{Summary}
+
+This chapter has covered the fundamentals of federated learning, four client selection strategies (Random, FedCS, PowerChoice, and MultiMetric), prototype learning as a privacy-preserving mechanism, the CPN architecture, evaluation metrics for imbalanced defect prediction, statistical testing methodology, and the datasets used in experiments. The next chapter describes the experimental methodology in detail.

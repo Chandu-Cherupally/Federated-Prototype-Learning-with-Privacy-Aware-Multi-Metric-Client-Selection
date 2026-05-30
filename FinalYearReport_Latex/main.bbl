@@ -1,0 +1,185 @@
+\begin{thebibliography}{10}
+
+\bibitem{mcmahan2017communication}
+B.~McMahan, E.~Moore, D.~Ramage, S.~Hampson, and B.~Aguerrebere,
+  ``Communication-efficient learning of deep networks from decentralized
+  data,'' in {\em Proceedings of the 20th International Conference on
+  Artificial Intelligence and Statistics}, pp.~1273--1282, PMLR, 2017.
+
+\bibitem{li2020federated}
+T.~Li, A.~K. Sahu, A.~Talwalkar, and V.~Smith, ``Federated learning:
+  Challenges, methods, and future directions,'' {\em IEEE Signal Processing
+  Magazine}, vol.~37, no.~3, pp.~50--60, 2020.
+
+\bibitem{cho2020power}
+Y.~J. Cho, J.~Wang, and G.~Joshi, ``Towards understanding biased client
+  selection in federated learning,'' in {\em Proceedings of the 25th
+  International Conference on Artificial Intelligence and Statistics},
+  pp.~10351--10375, PMLR, 2020.
+
+\bibitem{nishio2019client}
+T.~Nishio and R.~Yonetani, ``Client selection for federated learning with
+  heterogeneous resources in mobile edge,'' in {\em ICC 2019-2019 IEEE
+  International Conference on Communications}, pp.~1--7, IEEE, 2019.
+
+\bibitem{mitzenmacher2001power}
+M.~Mitzenmacher, ``The power of two choices in randomized load balancing,''
+  {\em IEEE Transactions on Parallel and Distributed Systems}, vol.~12, no.~10,
+  pp.~1094--1104, 2001.
+
+\bibitem{snell2017prototypical}
+J.~Snell, K.~Swersky, and R.~Zemel, ``Prototypical networks for few-shot
+  learning,'' in {\em Advances in Neural Information Processing Systems},
+  vol.~30, 2017.
+
+\bibitem{menzies2007promise}
+T.~Menzies, J.~DiStefano, A.~Sutton, C.~Olson, and M.~Gregg, ``The promise
+  repository of empirical software engineering data,'' in {\em 18th IEEE
+  International Symposium on Software Reliability}, 2007.
+
+\bibitem{d2010empirical}
+M.~D'Ambros, M.~Lanza, and R.~Robbes, ``An empirical study on the effectiveness
+  of diversity in ensemble learning for software defect prediction,'' in {\em
+  2010 IEEE 10th International Working Conference on Source Code Analysis and
+  Manipulation}, pp.~47--56, IEEE, 2010.
+
+\bibitem{hall2012systematic}
+T.~Hall, S.~Beecham, D.~Bowes, D.~Gray, and S.~Counsell, ``A systematic
+  literature review on fault prediction performance in software engineering,''
+  {\em IEEE Transactions on Software Engineering}, vol.~38, no.~6,
+  pp.~1276--1304, 2012.
+
+\bibitem{turhan2009empirical}
+B.~Turhan, T.~Menzies, A.~B. Bener, and J.~Di~Stefano, ``On the relative value
+  of cross-company and within-company data for defect prediction,'' in {\em
+  Empirical Software Engineering}, vol.~14, pp.~540--578, 2009.
+
+\bibitem{wang2021federated}
+S.~Wang, Y.~Li, and Z.~Jiang, ``Federated learning for software defect
+  prediction,'' in {\em Proceedings of the 29th ACM Joint Meeting on European
+  Software Engineering Conference}, pp.~1432--1442, 2021.
+
+\bibitem{li2022defectfl}
+X.~Li, W.~Zhou, J.~Chen, and Y.~Liu, ``Adaptive federated learning for software
+  defect prediction with heterogeneous client data,'' {\em IEEE Transactions on
+  Reliability}, vol.~71, no.~2, pp.~854--867, 2022.
+
+\bibitem{chen2023privacy}
+Q.~Chen, H.~Zhang, and M.~Wang, ``Privacy-preserving techniques for software
+  defect prediction: A comparative study,'' in {\em Proceedings of the 45th
+  International Conference on Software Engineering}, pp.~1123--1135, IEEE,
+  2023.
+
+\bibitem{rong2021powerfl}
+C.~Rong, S.~Liu, and H.~Chen, ``Towards adaptive federated learning:
+  Power-of-choice with fairness-aware tolerance,'' in {\em Proceedings of the
+  IEEE International Conference on Data Mining}, pp.~1346--1351, IEEE, 2021.
+
+\bibitem{li2020fedprox}
+T.~Li, A.~K. Sahu, M.~Zaheer, M.~Sanjabi, A.~Talwalkar, and V.~Smith,
+  ``Federated optimization in heterogeneous networks,'' in {\em Proceedings of
+  Machine Learning and Systems}, vol.~2, pp.~429--450, 2020.
+
+\bibitem{wang2021qfed}
+Z.~Wang, X.~Fan, J.~Qi, C.~Wen, P.~Wang, and C.~Yu, ``Federated learning with
+  fair averaging,'' in {\em Proceedings of the 30th International Joint
+  Conference on Artificial Intelligence}, pp.~1615--1621, 2021.
+
+\bibitem{zhang2021diversity}
+F.~Zhang, L.~Xiao, and Z.~Wang, ``Diverse client selection for federated
+  learning via submodular maximization,'' in {\em International Conference on
+  Learning Representations}, 2021.
+
+\bibitem{auer2002finite}
+P.~Auer, N.~Cesa-Bianchi, and P.~Fischer, ``Finite-time analysis of the
+  multiarmed bandit problem,'' {\em Machine Learning}, vol.~47, no.~2,
+  pp.~235--256, 2002.
+
+\bibitem{shi2021ucbfl}
+X.~Shi, Y.~Zhou, D.~Yao, Z.~Liu, and R.~Jia, ``Towards optimal worker selection
+  in federated learning using multi-armed bandit,'' in {\em Proceedings of the
+  27th ACM SIGKDD Conference on Knowledge Discovery and Data Mining},
+  pp.~1519--1529, ACM, 2021.
+
+\bibitem{li2022contextual}
+A.~Li, J.~Sun, P.~Li, Y.~Pu, H.~Li, and Y.~Chen, ``Contextual client selection
+  for federated learning via multi-armed bandits,'' in {\em IEEE International
+  Conference on Computer Communications}, pp.~1--10, IEEE, 2022.
+
+\bibitem{tan2022fedproto}
+Y.~Tan, G.~Long, L.~Liu, T.~Zhou, Q.~Lu, J.~Jiang, and C.~Zhang, ``Fedproto:
+  Federated prototype learning across heterogeneous clients,'' in {\em
+  Proceedings of the 36th AAAI Conference on Artificial Intelligence},
+  pp.~8432--8440, 2022.
+
+\bibitem{zhang2022protpriv}
+B.~Zhang, Y.~Li, Z.~Hou, and Q.~Wang, ``Privacy analysis of prototype-based
+  federated learning,'' in {\em IEEE International Conference on
+  Communications}, pp.~4345--4350, IEEE, 2022.
+
+\bibitem{li2021prototype}
+D.~Li, J.~Ding, and J.~Chen, ``Federated prototype learning with global-local
+  consistency,'' in {\em Proceedings of the 29th ACM International Conference
+  on Multimedia}, pp.~1340--1348, ACM, 2021.
+
+\bibitem{rodriguez2014comparison}
+D.~Rodriguez, I.~Herraiz, R.~Harrison, J.~Dolado, and J.~C. Riquelme,
+  ``Comparison of dimensionality reduction techniques to predict software
+  defects,'' {\em Journal of Systems and Software}, vol.~97, pp.~23--44, 2014.
+
+\bibitem{lessmann2008benchmark}
+S.~Lessmann, B.~Baesens, C.~Mues, and S.~Pietsch, ``Benchmarking classification
+  models for software defect prediction: A proposed framework and novel
+  findings,'' {\em IEEE Transactions on Software Engineering}, vol.~34, no.~4,
+  pp.~485--496, 2008.
+
+\bibitem{chicco2020advantages}
+D.~Chicco and G.~Jurman, ``The advantages of the matthews correlation
+  coefficient (mcc) over f1 score and accuracy in binary classification
+  evaluation,'' {\em BMC Genomics}, vol.~21, no.~1, pp.~1--13, 2020.
+
+\bibitem{he2009learning}
+H.~He and E.~A. Garcia, ``Learning from imbalanced data,'' {\em IEEE
+  Transactions on Knowledge and Data Engineering}, vol.~21, no.~9,
+  pp.~1263--1284, 2009.
+
+\bibitem{wang2016gmean}
+S.~Wang, X.~Li, and J.~Yao, ``Using geometric mean to motivate a new metric for
+  balanced classification problems,'' {\em Pattern Recognition Letters},
+  vol.~73, pp.~97--101, 2016.
+
+\bibitem{herbold2018comparison}
+S.~Herbold, A.~Trautsch, and J.~Grabowski, ``A comparative study to benchmark
+  cross-project defect prediction approaches,'' {\em IEEE Transactions on
+  Software Engineering}, vol.~44, no.~9, pp.~811--833, 2018.
+
+\bibitem{demsar2006statistical}
+J.~Dem{\v{s}}ar, ``Statistical comparisons of classifiers over multiple data
+  sets,'' {\em The Journal of Machine Learning Research}, vol.~7, pp.~1--30,
+  2006.
+
+\bibitem{dietterich1998approximate}
+T.~G. Dietterich, ``Approximate statistical tests for comparing supervised
+  classification learning algorithms,'' {\em Neural Computation}, vol.~10,
+  no.~7, pp.~1895--1923, 1998.
+
+\bibitem{bouckaert2004evaluating}
+R.~R. Bouckaert and E.~Frank, ``Evaluating the replicability of significance
+  tests for comparing learning algorithms,'' {\em Advances in Knowledge
+  Discovery and Data Mining}, vol.~3056, pp.~3--12, 2004.
+
+\bibitem{benjamini1995controlling}
+Y.~Benjamini and Y.~Hochberg, ``Controlling the false discovery rate: A
+  practical and powerful approach to multiple testing,'' {\em Journal of the
+  Royal Statistical Society: Series B}, vol.~57, no.~1, pp.~289--300, 1995.
+
+\bibitem{zhu2019deep}
+L.~Zhu, Z.~Liu, and S.~Han, ``Deep leakage from gradients,'' in {\em Advances
+  in Neural Information Processing Systems}, vol.~32, 2019.
+
+\bibitem{dwork2014algorithmic}
+C.~Dwork and A.~Roth, ``The algorithmic foundations of differential privacy,''
+  {\em Foundations and Trends in Theoretical Computer Science}, vol.~9,
+  no.~3--4, pp.~211--407, 2014.
+
+\end{thebibliography}

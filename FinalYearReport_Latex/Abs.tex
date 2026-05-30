@@ -1,0 +1,11 @@
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+Federated learning enables multiple organizations to collaboratively train a defect prediction model without sharing sensitive data, but its effectiveness depends critically on client selection. This project presents FPLPA with MultiMetric, an intelligent client selection algorithm that evaluates potential clients based on five signals: learning progress ($50\%$), class balance ($20\%$), data volume ($15\%$), performance consistency ($15\%$), and UCB-based exploration. Using an annealed softmax mechanism with temperature decreasing from $1.0$ to $0.3$, MultiMetric shifts from exploration to exploitation over time, identifying the most valuable clients each round.
+
+Experiments on nine real-world software defect datasets across subset sizes $k = \{3, 5, 8\}$ with $50$ rounds and $5$ runs compare MultiMetric against Random, FedCS, and PowerChoice baselines. For the optimal configuration ($k=3$), MultiMetric achieves AUC of $0.9982 \pm 0.0029$, G-Mean of $0.6423 \pm 0.4552$, MCC of $0.6351 \pm 0.4505$, and F1 of $0.9921 \pm 0.0079$, representing relative improvements of $+1.3\%$ in MCC and $+0.7\%$ in G-Mean over random selection. Paired t-tests confirm statistical significance ($p < 0.10$ for AUC and F1).
+
+The algorithm performs especially well on small subset sizes ($k=3$), where intelligent selection provides maximum benefit. While FedCS struggles with imbalanced clients and PowerChoice occasionally produces high false alarms, MultiMetric maintains consistent and balanced performance across all scenarios through its diversity enforcement mechanism.
+
+These results confirm that multi-faceted, quality-aware client selection significantly outperforms naive approaches in heterogeneous federated environments, offering a practical privacy-preserving solution for collaborative software defect prediction.
+
+\textbf{Keywords:} Federated Learning, Client Selection, Prototype Learning, Privacy Preservation, Software Defect Prediction
